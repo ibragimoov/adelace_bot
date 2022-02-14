@@ -1,14 +1,14 @@
-import {Entity, ObjectID, ObjectIdColumn, Column, OneToMany, PrimaryColumn} from "typeorm";
+import {Entity, ObjectID, ObjectIdColumn, Column, OneToMany, PrimaryColumn, PrimaryGeneratedColumn, ManyToOne, JoinColumn} from "typeorm";
 import { Product } from "./product.entity";
+import { User } from "./user.entity";
 
 @Entity('orders')
 export class Order {
-
     @ObjectIdColumn()
     id: ObjectID
 
-    @Column()
-    chatId: string;
+    @PrimaryColumn()
+    orderId: number;
 
     @Column()
     status: string;
@@ -19,6 +19,9 @@ export class Order {
     @Column('timestamp')
     updatedAt: Date;
 
-    @OneToMany(() => Product, products => products.order)
-    products: Product[]
+    @OneToMany(() => Product, product => product.order)
+    product: Product[]
+
+    @ManyToOne(() => User, user => user.order)
+    user: User
 }

@@ -9,4 +9,7 @@ export enum Action {
     MAKE_ORDER = '📤 Оформить заказ',
     MAIN_MENU = '👈 в главное меню',
     FAQ = '💡 FAQ',
+    ACCEPT = '✔️ Принять',
+    DENY = '❌ Отменить',
+    READY_TO_BE_ISSUED = '📦 Готов к выдаче'
 };

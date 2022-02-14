@@ -1,4 +1,5 @@
-import {Entity, ObjectID, ObjectIdColumn, Column, PrimaryColumn} from "typeorm";
+import {Entity, ObjectID, ObjectIdColumn, Column, PrimaryColumn, OneToMany, JoinColumn} from "typeorm";
+import { Order } from "./order.entity";
 
 @Entity('users')
 export class User {
@@ -14,4 +15,9 @@ export class User {
 
     @Column()
     phone: number;
+
+    @OneToMany(() => Order, order => order.user)
+
+    @JoinColumn()
+    order: Order[]
 }

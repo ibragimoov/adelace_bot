@@ -42,6 +42,18 @@ export class Buttons {
         return [Markup.button(Action.BUTTON_MAIN_MENU)]
     }
 
+    ACTION_TO_PRODUCT() {
+        return Markup.inlineKeyboard([
+            [
+                {text: Action.ACCEPT, callback_data: Action.ACCEPT},
+                {text: Action.DENY, callback_data: Action.DENY}
+            ],
+            [
+                {text: Action.READY_TO_BE_ISSUED, callback_data: Action.READY_TO_BE_ISSUED}
+            ]
+        ])
+    }
+
     SET_AUTH() {
         return Markup.keyboard([
             [Action.LOGIN],
@@ -54,7 +66,6 @@ export class Buttons {
     SET_MAIN_MENU() {
         return Markup.keyboard(
             [
-                [Action.SEND_ORDER_FOR_SELLERS],
                 [Action.MAKE_ORDER, Action.VIEW_ORDERS],
                 [Action.FAQ]
             ]
@@ -74,6 +85,12 @@ export class Buttons {
 
     BACK_BUTTON() {
         return Markup.keyboard([Markup.button(Action.BACK)])
+        .resize()
+        .extra()
+    }
+
+    BACK_TO_MENU() {
+        return Markup.keyboard([Markup.button(Action.MAIN_MENU)])
         .resize()
         .extra()
     }

@@ -1,14 +1,13 @@
-import {Entity, ObjectID, ObjectIdColumn, Column, OneToMany, ManyToMany, ManyToOne, PrimaryColumn} from "typeorm";
+import {Entity, ObjectID, ObjectIdColumn, Column, OneToMany, ManyToMany, ManyToOne, PrimaryColumn, JoinColumn, PrimaryGeneratedColumn} from "typeorm";
 import { Order } from "./order.entity";
 
 @Entity('products')
 export class Product {
-
     @ObjectIdColumn()
     id: ObjectID
 
-    @Column()
-    chatId: string;
+    @PrimaryGeneratedColumn()
+    productId: number;
 
     @Column()
     nameProduct: string;
@@ -16,7 +15,6 @@ export class Product {
     @Column()
     value: string;
 
-    @ManyToOne(() => Order, order => order.products)
+    @ManyToOne(() => Order, order => order.product)
     order: Order
-
 }

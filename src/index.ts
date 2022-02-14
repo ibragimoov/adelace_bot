@@ -8,10 +8,11 @@ import { User } from "./entities/user.entity";
 import { Buttons } from "./keyboard/buttons";
 import { Action } from "./constants/actions";
 import { LoginController } from './controllers/login.controller'
-// import orderScene from './controllers/order.controller.js';
-// import sendOrdersScene from './controllers/sendOrders.controller.js'
 import moment from "moment";
-import typeorm, { ConnectionOptions, createConnection } from "typeorm";
+import typeorm, { ConnectionOptions, createConnection, getMongoRepository } from "typeorm";
+import { OrderController } from "./controllers/order.controller";
+import { UserController } from "./controllers/user.controller";
+import { connection } from "mongoose";
 
 dotenv.config();
 
@@ -35,6 +36,8 @@ const connect = () => {
 
 class Bot {
     private loginController = new LoginController()
+    private orderController = new OrderController()
+    private userController = new UserController()
     private buttons = new Buttons()
 
     constructor() {
@@ -47,12 +50,12 @@ class Bot {
         const bot = new Telegraf<SceneContextMessageUpdate>(process.env.BOT_TOKEN as string);
 
         const loginScene = this.loginController.login()
+        const orderScene = this.orderController.makeOrder()
 
         const stage = new Stage (
             [
                 loginScene,
-                // orderScene,
-                // sendOrdersScene
+                orderScene,
             ]
         );
 
@@ -84,12 +87,8 @@ class Bot {
             );
         })
 
-        bot.hears(Action.SEND_ORDER_FOR_SELLERS, (ctx: any) => {
-            ctx.scene.enter('sendOrdersScene')
-        })
-
         bot.hears(Action.MAKE_ORDER, (ctx: any) => {
-            ctx.scene.enter('orderScene')
+            ctx.scene.enter('makeOrder')
         })
 
         bot.hears(Action.FAQ, async (ctx: any) => {
@@ -99,57 +98,65 @@ class Bot {
 
         bot.hears(Action.MAIN_MENU, (ctx: any) => {
             ctx.reply('Главное меню',
-            Markup.keyboard(this.buttons.MAIN_MENU())
-            .resize())
+            this.buttons.SET_MAIN_MENU())
         })
 
         bot.hears(Action.VIEW_ORDERS, async (ctx: any) => {
-            const chatId = ctx.chat.id
-            sendOrderByQuery(ctx, chatId)
+            const user = await this.userController.findUserByChatId(ctx.chat.id)
+            const orders = await this.userController.findOrderByUser(user)
+            const loadedPhoto = await 
+            getMongoRepository(Order)
+            .find({ relations: ["product"] });
+            console.log(loadedPhoto)
+            ctx.replyWithHTML(orders)
         })
 
         bot.hears(Action.BUTTON_MAIN_MENU, (ctx: any) => {
             ctx.reply('Привет дружище', 
-            Markup.keyboard(this.buttons.MAIN_MENU())
-            .resize());
+            this.buttons.MAIN_MENU())
             return ctx.scene.leave()
         })
 
-        // bot.hears(/c/, async (ctx: any) => {
-        //     let orderId = ctx.message.text;
-        //     orderId = orderId.substring(2, 5);
-        //     const productRep = typeorm.getMongoRepository(Product, 'adelace')
-        //     if (ctx.chat.id > 0) {
-        //         sendProductByQuery(ctx, orderId)
-        //     }
+        bot.hears(/c/, async (ctx: any) => {
+            let orderId = ctx.message.text;
+            orderId = Number(orderId.substring(2, 5))
+            if (ctx.chat.id > 0) {
+                // sendProductByQuery(ctx, orderId)
+            }
 
-        //     if (ctx.chat.id < 0) {
-        //         let html;
-        //         productRep.find({orderId: Number(orderId)}).then(async product => {
-        //             let count = 0,
-        //             user_id;
-        //             html = product.map ((f: any, _i) => {
-        //                 count++;
-        //                 user_id = f.chatId
-        //                 return `=========================\n 📦Товар: ${f.nameProduct}\n ⚖️Количество: ${f.value}`;
-        //             }).join('\n');
+            if (ctx.chat.id < 0) {
+                const uid = ctx.message.from.id
+                const user = await this.userController.findUserByChatId(uid)
+                const products = await this.userController.findProductByOrderId(user, orderId)
 
-        //             html += `\n=========================\n\nID клиента: -${user_id}\nID заказа: +${orderId}`
+                return await ctx.telegram.sendMessage('-1001223826227', products,
+                    this.buttons.ACTION_TO_PRODUCT())
+                 // let html;
+                 // productRep.find({orderId: Number(orderId)}).then(async product => {
+                    //     let count = 0,
+                    //     user_id;
+                    //     html = product.map ((f: any, _i) => {
+                    //         count++;
+                    //         user_id = f.chatId
+                    //         return `=========================\n 📦Товар: ${f.nameProduct}\n ⚖️Количество: ${f.value}`;
+                    //     }).join('\n');
 
-        //             return await ctx.telegram.sendMessage('-1001756421815', html,
-        //             Markup.inlineKeyboard(
-        //                 [
-        //                     [
-        //                         {text: '✔️ Принять', callback_data: '✔️ Принять'}, {text: '❌ Отменить', callback_data: '❌ Отменить'}
-        //                     ],
-        //                     [
-        //                         {text: '📦 Готов к выдаче', callback_data: '📦 Готов к выдаче'}
-        //                     ]
-        //                 ]
-        //             ))
-        //         });
-        //     }
-        // })
+                    //     html += `\n=========================\n\nID клиента: -${user_id}\nID заказа: +${orderId}`
+
+                        // return await ctx.telegram.sendMessage('-1001756421815', html,
+                        // Markup.inlineKeyboard(
+                        //     [
+                        //         [
+                        //             {text: '✔️ Принять', callback_data: '✔️ Принять'}, {text: '❌ Отменить', callback_data: '❌ Отменить'}
+                        //         ],
+                        //         [
+                        //             {text: '📦 Готов к выдаче', callback_data: '📦 Готов к выдаче'}
+                        //         ]
+                        //     ]
+                        // ))
+                    // });
+            }
+        })
 
         bot.hears(/d/, async (ctx: any) => {
             let orderId = ctx.message.text;
@@ -300,7 +307,7 @@ class Bot {
         bot.on('sticker', (ctx) => ctx.reply('👍'));
         bot.hears('hi', (ctx: any) => {
             ctx.reply(`${ctx.message.text}`)
-        });
+        }); 
 
         await bot
         .launch()
