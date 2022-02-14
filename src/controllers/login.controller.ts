@@ -1,12 +1,9 @@
 import { Buttons } from "../keyboard/buttons";
-import { User } from '../entities/user.entity';
-import {getMongoRepository} from 'typeorm';
 import { UserController } from './user.controller';
 
 const WizardScene = require("telegraf/scenes/wizard");
 export class LoginController {
     private buttons = new Buttons()
-    private userRepository = getMongoRepository(User);
     private userController = new UserController()
 
     login() {

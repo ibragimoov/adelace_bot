@@ -1,4 +1,4 @@
-import {Entity, ObjectID, ObjectIdColumn, Column, OneToMany, ManyToMany, ManyToOne, PrimaryColumn, JoinColumn, PrimaryGeneratedColumn} from "typeorm";
+import {Entity, ObjectID, ObjectIdColumn, Column, ManyToOne, PrimaryGeneratedColumn} from "typeorm";
 import { Order } from "./order.entity";
 
 @Entity('products')

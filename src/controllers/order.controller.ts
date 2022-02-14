@@ -1,18 +1,12 @@
 import { Buttons } from "../keyboard/buttons";
-import { getMongoRepository } from 'typeorm'
 import { UserController } from "./user.controller";
-import { User } from "../entities/user.entity";
 import { Order } from "../entities/order.entity";
-import { Product } from "../entities/product.entity";
 
 const WizardScene = require("telegraf/scenes/wizard");
 
 export class OrderController {
     private buttons = new Buttons()
     private userController = new UserController()
-    private userRepository = getMongoRepository(User);
-    private orderRepository = getMongoRepository(Order)
-    private productRepository = getMongoRepository(Product)
     private product: any = [];
 
     makeOrder() {

@@ -1,4 +1,4 @@
-import {Entity, ObjectID, ObjectIdColumn, Column, PrimaryColumn, OneToMany, JoinColumn} from "typeorm";
+import {Entity, ObjectID, ObjectIdColumn, Column, OneToMany, JoinColumn} from "typeorm";
 import { Order } from "./order.entity";
 
 @Entity('users')

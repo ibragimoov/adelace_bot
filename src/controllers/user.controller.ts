@@ -35,11 +35,6 @@ export class UserController {
         await this.productRepository.save(body)
     }
 
-    // async findOrderByOrderId(orderId: number) {
-    //     return this.orderRepository.find({orderId: orderId})
-    //     .then(async)
-    // }
-
     async findOrderByCreatedAt(user: any, query: any) {
         return this.orderRepository.find({user: user, createdAt: query})
             .then(async orders => {

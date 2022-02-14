@@ -1,4 +1,4 @@
-import { Telegraf, Markup, session, Stage} from "telegraf";
+import { Telegraf, session, Stage} from "telegraf";
 import { SceneContextMessageUpdate } from 'telegraf/typings/stage'
 import dotenv from 'dotenv';
 import procces from 'process';
@@ -8,7 +8,7 @@ import { User } from "./entities/user.entity";
 import { Buttons } from "./keyboard/buttons";
 import { Action } from "./constants/actions";
 import { LoginController } from './controllers/login.controller'
-import typeorm, { ConnectionOptions, createConnection } from "typeorm";
+import { ConnectionOptions, createConnection } from "typeorm";
 import { OrderController } from "./controllers/order.controller";
 import { UserController } from "./controllers/user.controller";
 
