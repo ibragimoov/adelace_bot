@@ -1,13 +1,13 @@
-import { Markup } from 'telegraf';
-import { Action } from '../constants/actions';
 import { Buttons } from "../keyboard/buttons";
 import { User } from '../entities/user.entity';
-import {getMongoRepository} from 'typeorm'
+import {getMongoRepository} from 'typeorm';
+import { UserController } from './user.controller';
 
 const WizardScene = require("telegraf/scenes/wizard");
 export class LoginController {
     private buttons = new Buttons()
     private userRepository = getMongoRepository(User);
+    private userController = new UserController()
 
     login() {
         return new WizardScene('loginScene',
@@ -23,36 +23,32 @@ export class LoginController {
                 this.buttons.SET_AUTH())
                 return ctx.scene.leave()
             }
-            // await phoneSchema.isValid(ctx.wizard.state.phone)
-            if (1) {
+            if (await this.userController.phoneSchema.isValid(ctx.wizard.state.phone)) {
                 await ctx.reply('Анализирую базу данных. . .');
                 let phone = ctx.wizard.state.phone
                 phone = Number(phone.slice(1, 12))
-                await (await this.userRepository.count({phone: phone})
-                .then((count: any) => {
-                    if (count > 0) {
-                        ctx.reply('Доступ к приложению открыт', 
-                        this.buttons.SET_MAIN_MENU()
-                        );
-                        return ctx.scene.leave();
+                const user = await this.userController.findUser(phone)
+
+                if (user) {
+                    await ctx.reply('Пользователь уже зарегистрирован.\nДоступ к приложению открыт',
+                      this.buttons.SET_MAIN_MENU()
+                    );
+
+                    return ctx.scene.leave();
+
+                } else {
+                    const newUser = {
+                        chatId: ctx.chat.id,
+                        name: ctx.chat.first_name,
+                        phone: phone
                     }
-                    else {
-                        this.userRepository.insertOne(
-                            {
-                            chatId: ctx.from.id, 
-                            name: ctx.from.first_name, 
-                            phone: phone
-                            }
-                            ).then(() => {
-                            console.log("Data inserted")
-                            ctx.reply('Номер телефона зарегистрирован\nОткрываю доступ к приложению. . .',
-                            this.buttons.SET_MAIN_MENU())
-                            ctx.scene.leave();;
-                            }).catch(function(error){
-                            console.log(error);
-                            });
-                    }
-                }))
+                    
+                    await this.userController.saveUser(newUser)
+                    await ctx.reply('Номер телефона зарегистрирован\nОткрываю доступ к приложению. . .',
+                    this.buttons.SET_MAIN_MENU())
+                    
+                    return ctx.scene.leave()
+                }
             } else {
                 ctx.replyWithHTML('<b>Error</b>: номер телефона записан <i>неправильно</i>')
             }
