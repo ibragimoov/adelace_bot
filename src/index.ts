@@ -104,10 +104,6 @@ class Bot {
         bot.hears(Action.VIEW_ORDERS, async (ctx: any) => {
             const user = await this.userController.findUserByChatId(ctx.chat.id)
             const orders = await this.userController.findOrderByUser(user)
-            const loadedPhoto = await 
-            getMongoRepository(Order)
-            .find({ relations: ["product"] });
-            console.log(loadedPhoto)
             ctx.replyWithHTML(orders)
         })
 
@@ -119,42 +115,19 @@ class Bot {
 
         bot.hears(/c/, async (ctx: any) => {
             let orderId = ctx.message.text;
+            const uid = ctx.message.from.id
+            const user = await this.userController.findUserByChatId(uid)
             orderId = Number(orderId.substring(2, 5))
             if (ctx.chat.id > 0) {
-                // sendProductByQuery(ctx, orderId)
+                const products = await this.userController.sendProductByQuery(orderId)
+                return await ctx.replyWithHTML(products)
             }
 
             if (ctx.chat.id < 0) {
-                const uid = ctx.message.from.id
-                const user = await this.userController.findUserByChatId(uid)
                 const products = await this.userController.findProductByOrderId(user, orderId)
 
                 return await ctx.telegram.sendMessage('-1001223826227', products,
-                    this.buttons.ACTION_TO_PRODUCT())
-                 // let html;
-                 // productRep.find({orderId: Number(orderId)}).then(async product => {
-                    //     let count = 0,
-                    //     user_id;
-                    //     html = product.map ((f: any, _i) => {
-                    //         count++;
-                    //         user_id = f.chatId
-                    //         return `=========================\n 📦Товар: ${f.nameProduct}\n ⚖️Количество: ${f.value}`;
-                    //     }).join('\n');
-
-                    //     html += `\n=========================\n\nID клиента: -${user_id}\nID заказа: +${orderId}`
-
-                        // return await ctx.telegram.sendMessage('-1001756421815', html,
-                        // Markup.inlineKeyboard(
-                        //     [
-                        //         [
-                        //             {text: '✔️ Принять', callback_data: '✔️ Принять'}, {text: '❌ Отменить', callback_data: '❌ Отменить'}
-                        //         ],
-                        //         [
-                        //             {text: '📦 Готов к выдаче', callback_data: '📦 Готов к выдаче'}
-                        //         ]
-                        //     ]
-                        // ))
-                    // });
+                this.buttons.ACTION_TO_PRODUCT())
             }
         })
 
@@ -172,50 +145,6 @@ class Bot {
                 ]
             ))
         })
-
-        async function sendOrderByQuery(ctx: any, chatId: number) {
-            let html;
-            const orderRep = await typeorm.getMongoRepository(Order, 'adelace')
-
-            orderRep.count({chatId: ctx.from.id})
-            .then((count: any) => {
-                if (count == 0) {
-                    ctx.reply('Нет заказов');
-                }
-                else {
-                    orderRep.find({ where: { chatId: chatId } }).then(async (orders) => {
-                        let count = 0;
-                        html = orders.map((f: any, i) => {
-                            count++;
-                            return `=============================\n <b>Заказ #${i + 1}</b>\n <b>✅Статус:</b> ${f.status}\n <b>📅Обновлено:</b> ${moment(f.updatedAt).format('DD.MM.YYYY, HH:mm')}\n <b>🔎Подробнее:</b> /c${f.orderId}\n\n <b>❎Удалить: /d${f.orderId}</b>`;
-                        }).join('\n');
-
-                        html += `\n=============================\n\n<b><i>📮Всего заказов:</i></b> ${count}`;
-                        await ctx.replyWithHTML(html);
-                    }).catch((e) => {
-                        console.log(e);
-                    });
-                }
-            })
-            .catch((error) => {
-                console.log(error)
-            })
-        }
-
-        function sendProductByQuery(ctx: any, orderId: any) {
-            let html;
-            const productRep = typeorm.getMongoRepository(Product, "adelace")
-            productRep.find({where: {orderId: Number(orderId)}}).then(async product => {
-                let count = 0;
-                html = product.map ((f: any, _i) => {
-                    count++;
-                    return `===================\n <b>📦Товар:</b> ${f.nameProduct}\n <b>⚖️Кол-во:</b> ${f.value}`;
-                }).join('\n');
-
-                html += `\n===================\n\n<b><i>🧺Всего товаров:</i></b> ${count}`
-                await ctx.replyWithHTML(html)
-            });
-        }
 
         bot.action('✔️ Принять', (ctx: any) => {
             const orderRep = typeorm.getMongoRepository(Order, "adelace")

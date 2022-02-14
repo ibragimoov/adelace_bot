@@ -20,6 +20,7 @@ export class Order {
     updatedAt: Date;
 
     @OneToMany(() => Product, product => product.order)
+    @Column()
     product: Product[]
 
     @ManyToOne(() => User, user => user.order)

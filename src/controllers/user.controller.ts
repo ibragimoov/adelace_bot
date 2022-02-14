@@ -66,20 +66,28 @@ export class UserController {
     }
 
     async findProductByOrderId(user: any, orderId: number) {
-        return this.orderRepository.find({user: user, orderId: orderId})
-            .then(async orders => {
-            // let count = -1, 
-            //     order_msg = ''
+        let order_msg: string = '',
+            count: number = 0
+        const loadedPhoto = await this.orderRepository
+        .findOne({orderId: orderId});
+        order_msg += loadedPhoto?.product.map((f: any, i: any) => {
+            count++;
+            return `=========================\n 📦Товар: ${f.nameProduct}\n ⚖️Количество: ${f.value}`;
+        }).join('\n')
 
-            // order_msg += orders.map ((f, i) => {
-            //     count++;
-            //     return `=============================\n <b>Заказ #${i}</b>\n <b>✅Статус:</b> ${f.status}\n <b>📅Обновлено:</b> ${moment(f.updatedAt).format('DD.MM.YYYY, HH:mm')}\n <b>🔎Подробнее:</b> /c${f.orderId}\n\n <b>❎Удалить: /d${f.orderId}</b> ${f.products[i].nameProduct}`;
-            // }).join('\n');
+        return order_msg += `\n=========================\n\nID клиента: -${user.chatId}\nID заказа: +${orderId}`
+    }
 
-            // return order_msg += `\n=========================\n\nID клиента: -${user.name}\nID заказа: +${orderId}`
-            orders.map((f, i) => {
-                console.log(f.product)
-            })
-        });
+    async sendProductByQuery(orderId: number) {
+        let order_msg: string = '',
+            count: number = 0
+        const loadedPhoto = await this.orderRepository
+        .findOne({orderId: orderId});
+        order_msg += loadedPhoto?.product.map((f: any, i: any) => {
+            count++;
+            return `=========================\n 📦Товар: ${f.nameProduct}\n ⚖️Количество: ${f.value}`;
+        }).join('\n')
+
+        return order_msg += `\n===================\n\n<b><i>🧺Всего товаров:</i></b> ${count}`
     }
 }
