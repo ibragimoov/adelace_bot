@@ -35,6 +35,11 @@ export class UserController {
         await this.productRepository.save(body)
     }
 
+    // async findOrderByOrderId(orderId: number) {
+    //     return this.orderRepository.find({orderId: orderId})
+    //     .then(async)
+    // }
+
     async findOrderByCreatedAt(user: any, query: any) {
         return this.orderRepository.find({user: user, createdAt: query})
             .then(async orders => {
@@ -65,7 +70,7 @@ export class UserController {
         });
     }
 
-    async findProductByOrderId(user: any, orderId: number) {
+    async findProductByOrderId(orderId: number) {
         let order_msg: string = '',
             count: number = 0
         const loadedPhoto = await this.orderRepository
@@ -75,7 +80,10 @@ export class UserController {
             return `=========================\n 📦Товар: ${f.nameProduct}\n ⚖️Количество: ${f.value}`;
         }).join('\n')
 
-        return order_msg += `\n=========================\n\nID клиента: -${user.chatId}\nID заказа: +${orderId}`
+        const orderObject = await this.orderRepository
+        .findOne({orderId: orderId})
+        order_msg += `\n=========================\n\nID клиента: -${orderObject?.user.chatId}\nID заказа: +${orderId}`
+        return order_msg
     }
 
     async sendProductByQuery(orderId: number) {
@@ -89,5 +97,36 @@ export class UserController {
         }).join('\n')
 
         return order_msg += `\n===================\n\n<b><i>🧺Всего товаров:</i></b> ${count}`
+    }
+
+    async deleteOrder(orderId: number) {
+        return this.orderRepository.findOneAndDelete({orderId: orderId})
+    }
+
+    async updateStatusAccept(orderId: number) {
+        return this.orderRepository.findOneAndUpdate({orderId: orderId}, {
+            $set: {
+                status: 'В обработке',
+                updatedAt: new Date()
+            }
+        })
+    }
+
+    async updateStatusReady(orderId: number) {
+        return this.orderRepository.findOneAndUpdate({orderId: orderId}, {
+            $set: {
+                status: 'Готов к выдаче',
+                updatedAt: new Date()
+            }
+        })
+    }
+
+    async updateStatusDeny(orderId: number) {
+        return this.orderRepository.findOneAndUpdate({orderId: orderId}, {
+            $set: {
+                status: 'Отменён',
+                updatedAt: new Date()
+            }
+        })
     }
 }

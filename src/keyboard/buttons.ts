@@ -52,6 +52,38 @@ export class Buttons {
                 {text: Action.READY_TO_BE_ISSUED, callback_data: Action.READY_TO_BE_ISSUED}
             ]
         ])
+        .extra()
+    }
+
+    ACCEPT_DELETE() {
+        return Markup.inlineKeyboard([
+            [
+                {text: Action.YES_DELETE, callback_data: Action.YES_DELETE}, 
+                {text: Action.NO_DELETE, callback_data: Action.NO_DELETE}
+            ]
+        ])
+        .extra()
+    }
+
+    ACCEPT_ORDER() {
+        return Markup.inlineKeyboard([
+            [
+                {text: Action.ACCEPTED, callback_data: Action.ACCEPTED}
+            ]
+        ])
+        .extra()
+    }
+
+    DENY_ORDER() {
+        return Markup.inlineKeyboard([
+            [
+                {text: Action.INCORRECT_NAME, callback_data: Action.INCORRECT_NAME}
+            ],
+            [
+                {text: Action.INCORRECT_VALUE, callback_data: Action.INCORRECT_VALUE}
+            ]
+        ])
+        .extra()
     }
 
     SET_AUTH() {

@@ -24,5 +24,6 @@ export class Order {
     product: Product[]
 
     @ManyToOne(() => User, user => user.order)
+    @Column()
     user: User
 }

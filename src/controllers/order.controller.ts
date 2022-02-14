@@ -29,6 +29,7 @@ export class OrderController {
             if (await ctx.wizard.state.nameOrder =='👈 в главное меню') {
                 ctx.reply('Главное меню', 
                 this.buttons.SET_MAIN_MENU());
+                for (let member in this.product) delete this.product[member];
                 return ctx.scene.leave()
             }
 
@@ -37,17 +38,18 @@ export class OrderController {
         },
         async (ctx: any) => {
             ctx.wizard.state.amount = ctx.message.text
-
-            if (await ctx.wizard.state.amount =='👈 в главное меню') {
-                ctx.reply('Главное меню', 
-                this.buttons.SET_MAIN_MENU());
-                return ctx.scene.leave()
-            }
     
             this.product.push({
                 nameProduct: ctx.wizard.state.nameOrder,
                 value: ctx.wizard.state.amount,
             })
+
+            if (await ctx.wizard.state.amount =='👈 в главное меню') {
+                ctx.reply('Главное меню', 
+                this.buttons.SET_MAIN_MENU());
+                for (let member in this.product) delete this.product[member];
+                return ctx.scene.leave()
+            }
     
             let html = this.product.map((f: any) => {
                 return `===================\n <b>📦Товар:</b> ${f.nameProduct}\n <b>⚖️Кол-во:</b> ${f.value}`
@@ -65,6 +67,7 @@ export class OrderController {
             if (await ctx.wizard.state.reply == '👈 в главное меню') {
                 ctx.reply('Главное меню', 
                 this.buttons.SET_MAIN_MENU());
+                for (let member in this.product) delete this.product[member];
                 return ctx.scene.leave()
             }
     
@@ -81,14 +84,6 @@ export class OrderController {
                 if (user) {
                     order.user = user
                 }
-                // const order = {
-                //     status: 'Новый',
-                //     orderId: ctx.wizard.state.orderId,
-                //     createdAt: new Date(),
-                //     updatedAt: new Date(),
-                //     products: this.product,
-                //     user: user
-                // }
 
                 await this.userController.saveOrder(order)
 

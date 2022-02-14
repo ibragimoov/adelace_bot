@@ -8,11 +8,9 @@ import { User } from "./entities/user.entity";
 import { Buttons } from "./keyboard/buttons";
 import { Action } from "./constants/actions";
 import { LoginController } from './controllers/login.controller'
-import moment from "moment";
-import typeorm, { ConnectionOptions, createConnection, getMongoRepository } from "typeorm";
+import typeorm, { ConnectionOptions, createConnection } from "typeorm";
 import { OrderController } from "./controllers/order.controller";
 import { UserController } from "./controllers/user.controller";
-import { connection } from "mongoose";
 
 dotenv.config();
 
@@ -114,9 +112,8 @@ class Bot {
         })
 
         bot.hears(/c/, async (ctx: any) => {
-            let orderId = ctx.message.text;
-            const uid = ctx.message.from.id
-            const user = await this.userController.findUserByChatId(uid)
+            const msg = ctx.message.text
+            let orderId = ctx.message.text
             orderId = Number(orderId.substring(2, 5))
             if (ctx.chat.id > 0) {
                 const products = await this.userController.sendProductByQuery(orderId)
@@ -124,7 +121,7 @@ class Bot {
             }
 
             if (ctx.chat.id < 0) {
-                const products = await this.userController.findProductByOrderId(user, orderId)
+                const products = await this.userController.findProductByOrderId(orderId)
 
                 return await ctx.telegram.sendMessage('-1001223826227', products,
                 this.buttons.ACTION_TO_PRODUCT())
@@ -133,103 +130,82 @@ class Bot {
 
         bot.hears(/d/, async (ctx: any) => {
             let orderId = ctx.message.text;
-            orderId = orderId.substring(2, 5);
-            const orderRep = typeorm.getMongoRepository(Order, 'adelace')
+            orderId = Number(orderId.substring(2, 5))
 
-            ctx.reply(`Подтверждение на удаление заказа №${orderId}`, 
-            Markup.inlineKeyboard(
-                [
-                    [
-                        {text: 'Да, удалить', callback_data: 'Да, удалить'}, {text: 'Отменить', callback_data: 'Отменить'}
-                    ]
-                ]
-            ))
+            ctx.reply(`Подтверждение на удаление заказа №${orderId}`,
+            this.buttons.ACCEPT_DELETE())
         })
 
-        bot.action('✔️ Принять', (ctx: any) => {
-            const orderRep = typeorm.getMongoRepository(Order, "adelace")
+        bot.action('✔️ Принять', async (ctx: any) => {
             const msg = ctx.callbackQuery.message.text
-            let user_id = msg.substring(msg.indexOf('-') + 1)
-            let order_id = msg.substring(msg.indexOf('+') + 1)
+            let uid = msg.substring(msg.indexOf('-') + 1)
+            let order_id = Number(msg.substring(msg.indexOf('+') + 1))
             
-            if (ctx.from.id == 258752149) {
-                ctx.answerCbQuery('Заказ принят')
-                ctx.telegram.sendMessage(user_id, `Обновляю статус заказов. . .\nТорговец принял ваш заказ №${order_id}`,
-                Markup.inlineKeyboard(
-                    [
-                        {text: 'Окей, принял!', callback_data: 'Окей, принял!'}
-                    ]
-                ))
-
-                orderRep.updateMany({orderId: Number(order_id)},
-                    {
-                        $set: {
-                            status: 'В обработке',
-                            updatedAt: new Date()
-                        }
-                    })
-                
-                ctx.pinChatMessage(ctx.callbackQuery.message.message_id)
-
-            } else {
-                ctx.answerCbQuery('Ты не торговец', ctx.from.id)
-                ctx.reply(`${ctx.from.first_name}, Ты не торговец`)
-            }
+            await this.userController.updateStatusAccept(order_id)
+            await ctx.answerCbQuery('Заказ принят')
+            await ctx.telegram.sendMessage(uid, `Обновляю статус заказов. . .\nПродавец принял ваш заказ №${order_id}`,
+            this.buttons.ACCEPT_ORDER())
+            
+            await ctx.pinChatMessage(ctx.callbackQuery.message.message_id)
         })
 
         bot.action('❌ Отменить', (ctx: any) => {
             const msg = ctx.callbackQuery.message.text
             const user_id = msg.substring(msg.indexOf('-') + 1)
 
-            if (ctx.from.id == 258752149) {
-                ctx.answerCbQuery('Заказ отменён')
-                ctx.telegram.sendMessage(user_id, 'Торговец отменил ваш заказ')
-            } else {
-                ctx.answerCbQuery('Ты не торговец', ctx.from.id)
-                ctx.reply(`${ctx.from.first_name}, Ты не торговец`)
-            }
+            ctx.reply(`Выберите причину отмены заказа\n\nЗаказчик:\nID пользователя: -${user_id}`,
+            this.buttons.DENY_ORDER())
+
+            ctx.answerCbQuery('Заказ отменён')
         })
 
-        bot.action('📦 Готов к выдаче', (ctx: any) => {
-            const orderRep = typeorm.getMongoRepository(Order, "adelace")
+        bot.action(Action.INCORRECT_NAME, (ctx: any) => {
             const msg = ctx.callbackQuery.message.text
-            let user_id = msg.substring(msg.indexOf('-') + 1)
-            let order_id = msg.substring(msg.indexOf('+') + 1)
+            const order_id = Number(msg.substring(msg.indexOf('+') + 1))
+            const uid = msg.substring(msg.indexOf('-') + 1)
+        
+            this.userController.updateStatusDeny(order_id)
+        
+            ctx.answerCbQuery('Заказ отменён')
+            ctx.telegram.sendMessage(uid, 'Продавец отменил ваш заказ по причине:\n "Некорректное название товара"')
+        })
+
+        bot.action(Action.INCORRECT_VALUE, (ctx: any) => {
+            const msg = ctx.callbackQuery.message.text
+            const user_id = msg.substring(msg.indexOf('-') + 1)
+            const order_id = Number(msg.substring(msg.indexOf('+') + 1))
+        
+            this.userController.updateStatusDeny(order_id)
+        
+            ctx.answerCbQuery('Заказ отменён')
+            ctx.telegram.sendMessage(user_id, 'Продавец отменил ваш заказ по причине:\n "Некорректное кол-во товара"')
+        })
+
+        bot.action('📦 Готов к выдаче', async (ctx: any) => {
+            const msg = ctx.callbackQuery.message.text
+            let uid = msg.substring(msg.indexOf('-') + 1)
+            let order_id = Number(msg.substring(msg.indexOf('+') + 1))
             
-            if (ctx.from.id == 258752149) {
-                ctx.answerCbQuery('Заказ готов к выдаче')
-                ctx.telegram.sendMessage(user_id, 'Торговец готов выдать товар\nОбновляю статус заказов. . .')
-
-                orderRep.updateMany({orderId: Number(order_id)},
-                    {
-                        $set: {
-                            status: 'Готов к выдаче',
-                            updatedAt: new Date()
-                        }
-                    })
-
-            } else {
-                ctx.answerCbQuery('Ты не торговец', ctx.from.id)
-                ctx.reply(`${ctx.from.first_name}, Ты не торговец`)
-            }
+            await this.userController.updateStatusReady(order_id)
+            await ctx.answerCbQuery('Заказ готов к выдаче')
+            await ctx.telegram.sendMessage(uid, 'Продавец готов выдать товар\nОбновляю статус заказов. . .')
         })
 
-        bot.action('Да, удалить', (ctx: any) => {
+        bot.action('Да, удалить', async (ctx: any) => {
             const msg = ctx.callbackQuery.message.text
-            const orderRep = typeorm.getMongoRepository(Order, 'adelace')
-            let orderId = msg.substring(msg.indexOf('№') + 1)
-            orderRep.findOneAndDelete({orderId: Number(orderId)})
-            ctx.reply('Заказ успешно удалён')
+            let orderId = Number(msg.substring(msg.indexOf('№') + 1))
+            await this.userController.deleteOrder(orderId)
+            await ctx.reply('Заказ успешно удалён')
         })
 
         bot.action('Отменить', ctx => {
             ctx.reply('Удаление заказа отменено')
         })
 
-        bot.action('Окей, принял!', (ctx: any) => {
+        bot.action(Action.ACCEPTED, (ctx: any) => {
             const msg = ctx.callbackQuery.message.text
-            let order_id = msg.substring(msg.indexOf('№') + 1)
-            ctx.telegram.sendMessage('-1001756421815', `Заказчик: ${ctx.chat.first_name}\nПринял заказ №${order_id}`)
+            let order_id = Number(msg.substring(msg.indexOf('№') + 1))
+            ctx.telegram.sendMessage('-1001223826227', `Заказчик: ${ctx.chat.first_name}\nПринял заказ №${order_id}`)
         })
 
         bot.help((ctx) => ctx.reply('Send me a sticker'));
