@@ -19,6 +19,12 @@ export class OrderController {
         async (ctx: any) => {
             ctx.wizard.state.chatId = ctx.chat.id;
             ctx.wizard.state.nameOrder = ctx.message.text;
+
+            if (await ctx.wizard.state.nameOrder == null) {
+                await ctx.reply('Стикеры не принимаем')
+                for await (let member of this.product) delete this.product[member];
+                return await ctx.scene.reenter('orderScene');
+            }
     
             if (await ctx.wizard.state.nameOrder =='👈 в главное меню') {
                 ctx.reply('Главное меню', 
@@ -37,6 +43,12 @@ export class OrderController {
                 nameProduct: ctx.wizard.state.nameOrder,
                 value: ctx.wizard.state.amount,
             })
+
+            if (await ctx.wizard.state.amount == null) {
+                await ctx.reply('Стикеры не принимаем')
+                for await (let member of this.product) delete this.product[member];
+                return await ctx.scene.reenter('orderScene');
+            }
 
             if (await ctx.wizard.state.amount =='👈 в главное меню') {
                 ctx.reply('Главное меню', 
@@ -57,6 +69,12 @@ export class OrderController {
         },
         async (ctx: any) => {
             ctx.wizard.state.reply = ctx.message.text;
+
+            if (await ctx.wizard.state.reply == null) {
+                await ctx.reply('Стикеры не принимаем')
+                for await (let member of this.product) delete this.product[member];
+                return await ctx.scene.reenter('orderScene');
+            }
     
             if (await ctx.wizard.state.reply == '👈 в главное меню') {
                 ctx.reply('Главное меню', 
