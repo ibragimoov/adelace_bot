@@ -11,6 +11,9 @@ import { LoginController } from './controllers/login.controller'
 import { ConnectionOptions, createConnection } from "typeorm";
 import { OrderController } from "./controllers/order.controller";
 import { UserController } from "./controllers/user.controller";
+import { brotliCompressSync } from "zlib";
+import { text } from "stream/consumers";
+import { getParsedCommandLineOfConfigFile } from "typescript";
 
 dotenv.config();
 
@@ -141,6 +144,7 @@ class Bot {
             let uid = msg.substring(msg.indexOf('-') + 1)
             let order_id = Number(msg.substring(msg.indexOf('+') + 1))
             
+            
             await this.userController.updateStatusAccept(order_id)
             await ctx.answerCbQuery('Заказ принят')
             await ctx.telegram.sendMessage(uid, `Обновляю статус заказов. . .\nПродавец принял ваш заказ №${order_id}`,
@@ -152,7 +156,6 @@ class Bot {
         bot.action('❌ Отменить', (ctx: any) => {
             const msg = ctx.callbackQuery.message.text
             const user_id = msg.substring(msg.indexOf('-') + 1)
-
             ctx.reply(`Выберите причину отмены заказа\n\nЗаказчик:\nID пользователя: -${user_id}`,
             this.buttons.DENY_ORDER())
 
@@ -213,6 +216,8 @@ class Bot {
         bot.hears('hi', (ctx: any) => {
             ctx.reply(`${ctx.message.text}`)
         }); 
+        
+        
 
         await bot
         .launch()

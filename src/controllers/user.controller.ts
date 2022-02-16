@@ -51,14 +51,29 @@ export class UserController {
     }
 
     async findOrderByUser(user: any) {
-        return this.orderRepository.find({user: user})
+        return this.orderRepository.find({user: user, where: {
+            $or: [
+                {
+                    status: 'Новый'
+                },
+                {
+                    status: 'В обработке'
+                },
+                {
+                    status: 'Готов к выдаче'
+                },
+                {
+                    status: 'Отменён'
+                }
+            ]
+        }})
             .then(async orders => {
             let count = 0, 
                 order_msg = ''
 
             order_msg = orders.map ((f, i) => {
                 count++;
-                return `=============================\n <b>Заказ #${i + 1}</b>\n <b>✅Статус:</b> ${f.status}\n <b>📅Обновлено:</b> ${moment(f.updatedAt).format('DD.MM.YYYY, HH:mm')}\n <b>🔎Подробнее:</b> /c${f.orderId}\n\n <b>❎Удалить: /d${f.orderId}</b>`;
+                return `=============================\n <b>Заказ #${i + 1}</b>\n <b>✅Статус:</b> ${f.status}\n <b>📅Обновлено:</b> ${moment(f.updatedAt).format('DD.MM.YYYY, HH:mm')}\n <a href = "/c${f.orderId}"><b>🔎Подробнее:</b></a>/c${f.orderId}\n\n <b>❎Удалить: /d${f.orderId}</b>`;
             }).join('\n');
 
             return order_msg += `\n=============================\n\n<b><i>📮Всего заказов:</i></b> ${count}`;
@@ -95,7 +110,13 @@ export class UserController {
     }
 
     async deleteOrder(orderId: number) {
-        return this.orderRepository.findOneAndDelete({orderId: orderId})
+        // return this.orderRepository.findOneAndDelete({orderId: orderId})
+        return this.orderRepository.findOneAndUpdate({orderId: orderId}, {
+            $set: {
+                status: 'Удалён',
+                updatedAt: new Date()
+            }
+        })
     }
 
     async updateStatusAccept(orderId: number) {

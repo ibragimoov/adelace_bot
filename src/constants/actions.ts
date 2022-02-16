@@ -2,7 +2,7 @@ export enum Action {
     SEND_ORDER_FOR_SELLERS = '📩 Отправить заказ продавцу',
     BUTTON_MAIN_MENU = '👈 в главное меню',
     VIEW_ORDERS = '💳 Мои заказы',
-    SEND_ORDER = '📤 Записать заказ',
+    SEND_ORDER = '📤 Оформить заказ',
     CONTINUE = '📝 Добавить ещё товар',
     LOGIN = '👤 Авторизация',
     BACK = '👈 Назад',

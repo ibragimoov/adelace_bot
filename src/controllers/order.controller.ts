@@ -83,7 +83,7 @@ export class OrderController {
                 return ctx.scene.leave()
             }
     
-            if (await ctx.wizard.state.reply == '📤 Записать заказ') {
+            if (await ctx.wizard.state.reply == '📤 Оформить заказ') {
                 ctx.wizard.state.orderId = Math.floor(Math.random() * (999 - 100 + 1) ) + 100;
                 const user = await this.userController.findUserByChatId(ctx.wizard.state.chatId)
                 const order = new Order()
