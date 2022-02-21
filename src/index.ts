@@ -11,9 +11,6 @@ import { LoginController } from './controllers/login.controller'
 import { ConnectionOptions, createConnection } from "typeorm";
 import { OrderController } from "./controllers/order.controller";
 import { UserController } from "./controllers/user.controller";
-import { brotliCompressSync } from "zlib";
-import { text } from "stream/consumers";
-import { getParsedCommandLineOfConfigFile } from "typescript";
 
 dotenv.config();
 
@@ -114,7 +111,7 @@ class Bot {
             return ctx.scene.leave()
         })
 
-        bot.hears(/c/, async (ctx: any) => {
+        bot.hears(/\/c/, async (ctx: any) => {
             const msg = ctx.message.text
             let orderId = ctx.message.text
             orderId = Number(orderId.substring(2, 5))
@@ -131,7 +128,7 @@ class Bot {
             }
         })
 
-        bot.hears(/d/, async (ctx: any) => {
+        bot.hears(/\/d/, async (ctx: any) => {
             let orderId = ctx.message.text;
             orderId = Number(orderId.substring(2, 5))
 
